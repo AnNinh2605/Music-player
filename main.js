@@ -1,5 +1,5 @@
-// 1. Render song 
-// 2. Csroll Top
+// 1. Render song
+// 2. Cd sroll Top
 // 3. Play & Pause
 // 4. CD Rotage
 // 5. Next & previous
@@ -29,7 +29,7 @@ const randomBtn = $('.btn-random');
 const repeatBtn = $('.btn-repeat');
 
 const app = {
-    currentIndex: -1,
+    currentIndex: 0,
     isPlaying: false,
     isRandom: false,
     isRepeat: false,
@@ -107,20 +107,18 @@ const app = {
         const _this = this
         const cdWidth = cd.offsetWidth 
         // animation JS CD rotate
-        // animation nhận đối số là mảng
         const cdThumbAnimate = cdThumb.animate([
-            { transform: 'rotate(359deg)'}
+            { transform: 'rotate(360deg)'}
         ], {
-            duration: 9999,    // một vòng quay tốn 10s
-            iterations: Infinity    // quay vô số lần
+            duration: 10000,    
+            iterations: Infinity   
         })
         cdThumbAnimate.pause()
-
+        // xử lí scroll CD khi kéo bài hát lên
         document.onscroll = function() {
             const scrollTop = window.scrollY || document.documentElement.scrollTop
             const newCdWidth = cdWidth - scrollTop //trừ đi scrollTop
-            // console.log(newCdWidth)
-                cd.style.width = newCdWidth > -1 ? newCdWidth + 'px' : 0  // check đảm bảo về ẩn hết CD
+                cd.style.width = newCdWidth > 0 ? newCdWidth + 'px' : 0  // check đảm bảo về ẩn hết CD
                 cd.style.opacity = newCdWidth / cdWidth;
         } 
         // xử lí play & pause button
@@ -132,7 +130,7 @@ const app = {
                 audio.play();
             } 
         } 
-        // lắng nghe play & pause cd
+        // xử lí audio
         audio.onplay = function()
             {
                 _this.isPlaying = true
@@ -149,14 +147,12 @@ const app = {
         audio.ontimeupdate = function() {
             if(audio.duration) {
                 const progessPercent = Math.floor(audio.currentTime / audio.duration * 100);
-                // console.log(progessPercent);
                 playLoading.value = progessPercent
             }
         }  
-        //Tua bài hát
+        // Tua bài hát
         playLoading.onchange = function(e) {
-            const stage = e.target.value * audio.duration / 100  ////stage là % giữa điểm tua và toàn bộ bài hát
-            // console.log(stage);
+            const stage = e.target.value * audio.duration / 100
             audio.currentTime = stage
         },
 
@@ -180,15 +176,16 @@ const app = {
             }
             audio.play()  
             _this.render() 
-            _this.scrollToActiveSong()  // chuyển bài và chạy tiếp bài hát
+            _this.scrollToActiveSong()
         },
+        
         //random bài hát
         randomBtn.onclick = function() {
             _this.isRandom = !_this.isRandom
-            _this.setConfig('isRamdom', _this.isRandom)
-            randomBtn.classList.toggle('active', _this.isRandom) // toggle
+            _this.setConfig('isRandom', _this.isRandom)
+            randomBtn.classList.toggle('active', _this.isRandom)
         }
-        // end và next
+        // xử lí khi end bài hát và chuyển sang next song
         audio.onended = function() {
             if(_this.isRepeat) {
                 audio.play()
@@ -203,11 +200,10 @@ const app = {
             _this.setConfig('isRepeat', _this.isRepeat)
             repeatBtn.classList.toggle('active', _this.isRepeat)
         }
-        // click to song // lắng nghe hành vi click vào playList
+        // Xử lí khi click vào Song
         playList.onclick = function(e) { 
-            // Xử lí khi click vào Song
             const songNode = e.target.closest('.song:not(.active)')
-            if(songNode || e.target.closest('.option')) { // điều kiện cho click
+            if(songNode || e.target.closest('.option')) {
                 if(songNode) {
                     _this.currentIndex = Number(songNode.dataset.index) // dateset.index trả và chuổi phải chuyển sang Number
                     _this.loadCurrentSong()
@@ -223,25 +219,24 @@ const app = {
         this.isRandom = this.config.isRandom
         this.isRepeat = this.config.isRepeat
     },
+    // load bài hát hiện tại
     loadCurrentSong: function() {
         heading.textContent = this.currentSong.name
         cdThumb.style.backgroundImage = `url('${this.currentSong.image}')`
         audio.src = this.currentSong.path
-
-        // console.log(heading, cdThumb, audio);
     },
     // Next bài hát
     nextSong : function() {
         this.currentIndex++;
         if (this.currentIndex >= this.songs.length) {
-            this.currentIndex = -1
+            this.currentIndex = 0
         }
         this.loadCurrentSong()
     },
     previousSong : function() {
         this.currentIndex--;
-        if (this.currentIndex < -1) {
-            this.currentIndex = this.songs.length - 0
+        if (this.currentIndex < 0) {
+            this.currentIndex = this.songs.length - 1
         }
         this.loadCurrentSong()
     },
@@ -260,20 +255,20 @@ const app = {
         setTimeout(() => {
             $('.song.active').scrollIntoView({
                 behavior: 'smooth',
-                block: 'nearest'
+                block: 'center'
             })
         }, 200)
     },
     start: function() {   
         this.loadConFig()   // gán cấu hình config vào 
         this.defineProperties();   // định nghĩa các thuộc tính cho object   
-        this.render();  // chức năng render ra danh sách bài hát
         this.handleEvents(); // chức năng xử lí thanh cuộn onscroll
         this.loadCurrentSong(); //Tải thông tin bài hát vào UI khi chạy ứng dụng
+        this.render();  // chức năng render ra danh sách bài hát
+
         // hiện thị trạng thái ban đầu của button repeat và random
-        randomBtn.classList.toggle('active', this.isRandom)
-        repeatBtn.classList.toggle('active', this.isRepeat)
+        repeatBtn.classList.toggle('active', this.isRepeat);
+        randomBtn.classList.toggle('active', this.isRandom);
     }
 }
-
 app.start()
